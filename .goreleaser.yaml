@@ -1,0 +1,46 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines bellow are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - binary: gpio-fan-control
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+nfpms:
+  - id: default
+    package_name: gpio-fan-control
+    vendor: Alyseo
+    maintainer: Thibaud Demay <thibaud.demay@alyseo.com>
+    description: A simple fan control using gpio and sysfs file for temperature
+    formats:
+      - deb
+    bindir: /usr/bin
+    contents:
+      - src: ./init/gpio-fan-control.service
+        dst: /lib/systemd/system/gpio-fan-control.service
+        type: config
+    scripts:
+      postinstall: ./scripts/postinstall.sh
+      postremove: ./scripts/postremove.sh
+
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
