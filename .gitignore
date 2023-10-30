@@ -1,0 +1,9 @@
+
+# BUILD
+dist/
+go-gpio-fan-control
+go-gpio-fan-control-arm64
+go-gpio-fan-control-amd64
+
+# MAC
+.DS_Store
