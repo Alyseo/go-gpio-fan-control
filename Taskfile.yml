@@ -1,0 +1,27 @@
+# https://taskfile.dev
+
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  default: task -l
+
+  build:dirs:
+    internal: true
+    cmds:
+      - mkdir -p build/{amd64,arm64}
+
+  build:
+    cmds:
+      - task: build:dirs
+      - GOOS=linux GOARCH=amd64 go build -o build/amd64/gpio-fan-control main.go
+      - GOOS=linux GOARCH=arm64 go build -o build/arm64/gpio-fan-control main.go
+
+  release:snapshot:
+    cmds:
+      - goreleaser release --clean --snapshot
+
+  release:github:
+    cmds:
+      - goreleaser release --clean

@@ -59,10 +59,11 @@ func init() {
 	defaultRefreshTime, _ := time.ParseDuration("5s")
 	rootCmd.Flags().StringP("gpio", "g", "70", "GPIO pin number where the fan is connected.")
 	rootCmd.Flags().Float64P("threshold-temp", "t", 45.0, "Temperature in celsius to start the fan.")
-	rootCmd.Flags().Float64P("critical-temp", "c", 77.0, "Temperature in celsius to shutdown system.")
+	rootCmd.Flags().Float64P("critical-temp", "c", 77.0, "Temperature in celsius to reboot system.")
 	rootCmd.Flags().DurationP("refresh-time", "r", defaultRefreshTime, "Time in seconds between each temperature check.")
 	rootCmd.Flags().StringP("sensor-path", "s", "/sys/class/thermal/thermal_zone0/temp", "SysFS path to the temperature sensor.")
 	rootCmd.Flags().Uint16P("port", "p", 6560, "Port to expose metrics.")
+	rootCmd.Flags().BoolP("critical-shutdown", "d", false, "Use shutdown instead of reboot when critical temperature is reached.")
 	rootCmd.Flags().BoolP("verbose", "v", false, "Verbose mode.")
 }
 
@@ -92,6 +93,7 @@ func fanControl(cmd *cobra.Command, args []string, logger log.Logger, terminate 
 	thresholdTemp, _ := cmd.Flags().GetFloat64("threshold-temp")
 	criticalTemp, _ := cmd.Flags().GetFloat64("critical-temp")
 	refreshTime, _ := cmd.Flags().GetDuration("refresh-time")
+	criticalShutdown, _ := cmd.Flags().GetBool("critical-shutdown")
 
 	// Get GPIO chip and line from GPIO pin number
 	gpioChip, gpioLine := getGpioChipAndLine(gpioPin)
@@ -155,7 +157,11 @@ func fanControl(cmd *cobra.Command, args []string, logger log.Logger, terminate 
 
 			if temp >= criticalTemp {
 				logger.Errorf("Critical temperature reached: %.2f", temp)
-				syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
+				if !criticalShutdown {
+					syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
+				} else {
+					syscall.Reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
+				}
 			} else if temp >= thresholdTemp && fanGpioValue == 0 {
 				logger.Infof("Starting fan, temperature: %.2f", temp)
 				fanGpioValue = 1
