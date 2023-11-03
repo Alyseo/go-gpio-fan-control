@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"go-gpio-fan-control/metrics"
+	"go-gpio-fan-control/version"
 	"net/http"
 	"os"
 	"os/signal"
@@ -103,11 +104,10 @@ func fanControl(cmd *cobra.Command, args []string, logger log.Logger, terminate 
 
 	// Prometheus metrics initialization
 	logger.Debugf("Build metrics context and set const values (Threshold temperature, Critial temperature, Refresh time).")
-	promMetrics := metrics.NewGpioFanControlMetrics(gpioPin, sensorPath)
-	promMetrics.SetThresholdTemp(thresholdTemp)
-	promMetrics.SetCriticalTemp(criticalTemp)
-	promMetrics.SetRefreshTime(refreshTime.Seconds())
+	promMetrics := metrics.NewGpioFanControlMetrics(gpioPin, sensorPath, thresholdTemp, criticalTemp, refreshTime.Seconds())
 	promMetrics.SetGpioState(float64(fanGpioValue))
+
+	logger.Infof("Version: %s", version.BuildVersion())
 
 	logger.Infof("Starting fan control with following parameters:")
 	logger.Infof("  GPIO pin for fan: %s (%s, %d)", gpioPin, gpioChip, gpioLine)

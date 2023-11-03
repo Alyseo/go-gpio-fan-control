@@ -19,6 +19,8 @@ builds:
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - -s -w -X go-gpio-fan-control/version.Version={{.Version}} -X go-gpio-fan-control/version.Branch={{.Branch}} -X go-gpio-fan-control/version.CommitHash={{.Commit}} -X go-gpio-fan-control/version.BuildTimestamp={{.Date}} -X go-gpio-fan-control/version.BuiltBy=goreleaser
 
 nfpms:
   - id: default
