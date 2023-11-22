@@ -73,7 +73,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&config.ConfigFile, "config", "f", "", "Config file (default is /etc/gpio-fan-control/gpio-fan-control.conf.yml)")
 
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", true, "Verbose mode.")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose mode.")
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 
 	rootCmd.PersistentFlags().StringVarP(&gpio, "gpio", "g", "", "GPIO pin number where the fan is connected.")
