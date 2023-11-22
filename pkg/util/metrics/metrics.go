@@ -1,13 +1,14 @@
-/*
-Copyright © 2023 Thibaud Demay <thibaud.demay@alyseo.com>
-*/
-
 package metrics
 
 import (
-	"go-gpio-fan-control/version"
+	"fmt"
+	"go-gpio-fan-control/pkg/util/logging"
+	"go-gpio-fan-control/pkg/util/version"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/spf13/viper"
 )
 
 type gpioFanControlMetrics struct {
@@ -79,4 +80,13 @@ func NewGpioFanControlMetrics(gpioPin string, sensorPath string, thresholdTemp f
 	prometheus.MustRegister(m.gpioState)
 	prometheus.MustRegister(m.temperature)
 	return m
+}
+
+func StartMetricsServer() {
+	logger := logging.GetLogger()
+	port := viper.GetUint16("metricsPort")
+	addr := fmt.Sprintf(":%d", port)
+	logger.Infof("Starting metrics server on 0.0.0.0:%d/metrics", port)
+	http.Handle("/metrics", promhttp.Handler())
+	http.ListenAndServe(addr, nil)
 }
