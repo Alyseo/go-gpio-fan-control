@@ -23,7 +23,7 @@ var (
 	gpio             string
 	thresholdTemp    float64
 	criticalTemp     float64
-	refreshTime      time.Duration
+	checkInterval    time.Duration
 	sensorPath       string
 	criticalShutdown bool
 	metricsEnabled   bool
@@ -67,7 +67,7 @@ func Execute() {
 }
 
 func init() {
-	defaultRefreshTime, _ := time.ParseDuration("5s")
+	defaultCheckInterval, _ := time.ParseDuration("5s")
 
 	cobra.OnInitialize(config.InitConfig)
 
@@ -88,9 +88,9 @@ func init() {
 	rootCmd.MarkFlagRequired("critical-temp")
 	viper.BindPFlag("criticalTemp", rootCmd.PersistentFlags().Lookup("critical-temp"))
 
-	rootCmd.PersistentFlags().DurationVarP(&refreshTime, "refresh-time", "r", defaultRefreshTime, "Time in seconds between each temperature check.")
-	viper.BindPFlag("refreshTime", rootCmd.PersistentFlags().Lookup("refresh-time"))
-	viper.SetDefault("refreshTime", defaultRefreshTime)
+	rootCmd.PersistentFlags().DurationVarP(&checkInterval, "check-interval", "i", defaultCheckInterval, "Time in seconds between each temperature check.")
+	viper.BindPFlag("checkInterval", rootCmd.PersistentFlags().Lookup("check-interval"))
+	viper.SetDefault("checkInterval", defaultCheckInterval)
 
 	rootCmd.PersistentFlags().StringVarP(&sensorPath, "sensor-path", "s", "/sys/class/thermal/thermal_zone0/temp", "SysFS path to the temperature sensor.")
 	viper.BindPFlag("sensorPath", rootCmd.PersistentFlags().Lookup("sensor-path"))
@@ -113,10 +113,11 @@ func init() {
 // fanControl function is the main loop for fan control.
 // It will read temperature from sensor, and start/stop fan depending on temperature threshold.
 func fanControl(cmd *cobra.Command, args []string, logger log.Logger, terminate chan<- struct{}) {
+	verbose := viper.GetBool("verbose")
 	gpio := viper.GetString("gpio")
 	thresholdTemp := viper.GetFloat64("thresholdTemp")
 	criticalTemp := viper.GetFloat64("criticalTemp")
-	refreshTime := viper.GetDuration("refreshTime")
+	checkInterval := viper.GetDuration("checkInterval")
 	sensorPath := viper.GetString("sensorPath")
 	criticalShutdown := viper.GetBool("criticalShutdown")
 
@@ -128,17 +129,18 @@ func fanControl(cmd *cobra.Command, args []string, logger log.Logger, terminate 
 
 	// Prometheus metrics initialization
 	logger.Debugf("Build metrics context and set const values (Threshold temperature, Critial temperature, Refresh time).")
-	promMetrics := metrics.NewGpioFanControlMetrics(gpio, sensorPath, thresholdTemp, criticalTemp, refreshTime.Seconds())
+	promMetrics := metrics.NewGpioFanControlMetrics(gpio, sensorPath, thresholdTemp, criticalTemp, checkInterval.Seconds())
 	promMetrics.SetGpioState(float64(fanGpioValue))
 
 	logger.Infof("Version: %s", version.BuildVersion())
 
 	logger.Infof("Starting fan control with following parameters:")
+	logger.Infof("  Verbose: %t", verbose)
 	logger.Infof("  GPIO pin for fan: %s (%s, %d)", gpio, gpioChip, gpioLine)
 	logger.Infof("  Sensor path: %s", sensorPath)
 	logger.Infof("  Threshold temperature: %.2f", thresholdTemp)
 	logger.Infof("  Critical temperature: %.2f", criticalTemp)
-	logger.Infof("  Refresh time: %d", refreshTime)
+	logger.Infof("  Check Interval: %d", checkInterval)
 
 	logger.Debugf("Opening GPIO pin: %s (%s, %d)", gpio, gpioChip, gpioLine)
 	// Request GPIO line and set initial value
@@ -173,7 +175,7 @@ func fanControl(cmd *cobra.Command, args []string, logger log.Logger, terminate 
 	var temp float64
 	for {
 		select {
-		case <-time.After(refreshTime):
+		case <-time.After(checkInterval):
 			temp = getTempFromFile(sensorFile)
 			promMetrics.SetTemperature(temp)
 

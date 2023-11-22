@@ -1,5 +1,8 @@
 # GPIO Fan Control Configuration File
 
+# Enable debug logging, bool
+verbose: false
+
 # GPIO pin to use to control the fan, string
 gpio: 70
 
@@ -23,7 +26,4 @@ metrics: false
 
 # Port metrics are exposed on, uint16
 metricsPort: 6560
-
-# Enable debug logging, bool
-verbose: false
 

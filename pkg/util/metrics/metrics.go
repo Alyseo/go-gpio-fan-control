@@ -15,7 +15,7 @@ type gpioFanControlMetrics struct {
 	buildInfo     prometheus.GaugeFunc
 	thresholdTemp prometheus.GaugeFunc
 	criticalTemp  prometheus.GaugeFunc
-	refreshTime   prometheus.GaugeFunc
+	checkInterval prometheus.GaugeFunc
 	gpioState     *prometheus.GaugeVec
 	temperature   *prometheus.GaugeVec
 	gpioPin       string
@@ -30,7 +30,7 @@ func (m *gpioFanControlMetrics) SetTemperature(value float64) {
 	m.temperature.WithLabelValues(m.gpioPin, m.sensorPath).Set(value)
 }
 
-func NewGpioFanControlMetrics(gpioPin string, sensorPath string, thresholdTemp float64, criticalTemp float64, refreshTime float64) *gpioFanControlMetrics {
+func NewGpioFanControlMetrics(gpioPin string, sensorPath string, thresholdTemp float64, criticalTemp float64, checkInterval float64) *gpioFanControlMetrics {
 	commonLabels := prometheus.Labels{
 		"gpio_pin":    gpioPin,
 		"sensor_path": sensorPath,
@@ -57,11 +57,11 @@ func NewGpioFanControlMetrics(gpioPin string, sensorPath string, thresholdTemp f
 			Help:        "Temperature to shutdown system.",
 			ConstLabels: commonLabels,
 		}, func() float64 { return criticalTemp }),
-		refreshTime: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		checkInterval: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Name:        "gpio_fan_control_refresh_time",
 			Help:        "Time between each temperature check.",
 			ConstLabels: commonLabels,
-		}, func() float64 { return refreshTime }),
+		}, func() float64 { return checkInterval }),
 		gpioState: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "gpio_fan_control_gpio_state",
 			Help: "GPIO state for the fan.",
@@ -76,7 +76,7 @@ func NewGpioFanControlMetrics(gpioPin string, sensorPath string, thresholdTemp f
 	prometheus.MustRegister(m.buildInfo)
 	prometheus.MustRegister(m.thresholdTemp)
 	prometheus.MustRegister(m.criticalTemp)
-	prometheus.MustRegister(m.refreshTime)
+	prometheus.MustRegister(m.checkInterval)
 	prometheus.MustRegister(m.gpioState)
 	prometheus.MustRegister(m.temperature)
 	return m
