@@ -5,7 +5,7 @@ After=multi-user.target
 [Service]
 Restart=always
 Type=simple
-ExecStart=/usr/bin/gpio-fan-control --gpio 70 --threshold-temp 45 --critical-temp 77 --refresh-time 5s
+ExecStart=/usr/bin/gpio-fan-control --config /etc/gpio-fan-control/gpio-fan-control.conf.yml
 
 [Install]
 WantedBy=multi-user.target

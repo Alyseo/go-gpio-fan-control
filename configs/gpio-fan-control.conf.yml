@@ -1,0 +1,29 @@
+# GPIO Fan Control Configuration File
+
+# GPIO pin to use to control the fan, string
+gpio: 70
+
+# Temperature at which the fan should turn on/off, in degrees Celsius, float64
+thresholdTemp: 45.0
+
+# Critical temperature at which the system reboot or restart, in degrees Celsius, float64
+criticalTemp: 77.0
+
+# Action on critical temperature shutdown on true or restart on false, bool
+criticalShutdown: false
+
+# Time in seconds to wait between temperature checks, duration
+checkInterval: 5s
+
+# Path to sensor file in sysfs, string
+sensorPath: /sys/class/thermal/thermal_zone0/temp
+
+# Metrics activation, bool
+metrics: false
+
+# Port metrics are exposed on, uint16
+metricsPort: 6560
+
+# Enable debug logging, bool
+verbose: false
+

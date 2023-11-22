@@ -1,0 +1,18 @@
+#!/bin/sh -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+db_input high config/activate_metrics || true
+db_go
+
+db_get config/activate_metrics
+if [ "$RET" = "true" ]; then
+    sed -i 's/metrics: false/metrics: true/g' /etc/gpio-fan-control/gpio-fan-control.conf.yml
+fi
+
+if [ -f "/lib/systemd/system/gpio-fan-control.service" ]; then
+    systemctl daemon-reload
+    systemctl enable gpio-fan-control.service
+    systemctl start gpio-fan-control.service
+fi
